@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clipboard, FileJson2, Light
 import { calculateScore, parseQuizSet, type Difficulty, type QuizSet } from './quiz'
 import { createPrompt } from './prompt'
 
-type Screen = 'configure' | 'import' | 'practice' | 'result'
+type Screen = 'home' | 'configure' | 'import' | 'practice' | 'result'
 
 const letters = ['A', 'B', 'C', 'D']
 
@@ -28,7 +28,7 @@ const exampleJson = `{
 }`
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('configure')
+  const [screen, setScreen] = useState<Screen>('home')
   const [topic, setTopic] = useState('')
   const [countInput, setCountInput] = useState('10')
   const [countError, setCountError] = useState('')
@@ -114,7 +114,7 @@ export default function App() {
   }
 
   function resetApp() {
-    setScreen('configure')
+    setScreen('home')
     setRawJson('')
     setImportErrors([])
     setQuiz(null)
@@ -144,19 +144,45 @@ export default function App() {
         <button className="brand" onClick={resetApp} aria-label="Kembali ke beranda Drillio">
           <span>Drillio<span className="brand-stop">.</span></span>
         </button>
-        <span className="header-note">ruang latihan mandiri</span>
+        <span className="header-note">latihan dari soal AI</span>
       </header>
 
-      {screen === 'configure' && (
-        <section className="configure-page" aria-labelledby="page-title">
-          <div className="intro-copy">
-            <h1 id="page-title">Bawa soal dari AI.<br />Belajar dengan caramu.</h1>
-            <p className="lede">Pilih topik dan bentuk pertanyaannya. Kami siapkan instruksi yang dapat dipakai di AI mana pun.</p>
-            <p className="workflow-note">Tidak perlu akun. Tempel JSON hasil AI, lalu kerjakan soalnya dalam satu sesi yang tenang.</p>
+      {screen === 'home' && (
+        <section className="landing-page" aria-labelledby="landing-title">
+          <div className="landing-hero">
+            <div className="landing-copy">
+              <h1 id="landing-title">Bawa soal dari AI.<br />Kerjakan seperti ujian.</h1>
+              <p>Drillio mengubah paket soal JSON menjadi sesi latihan yang fokus, lengkap dengan timer dan layar penuh saat kamu membutuhkannya.</p>
+              <button className="landing-cta" type="button" onClick={() => setScreen('configure')}>Mulai buat latihan <ArrowRight size={18} /></button>
+              <span className="landing-note">Tanpa akun. Pakai AI apa pun yang kamu suka.</span>
+            </div>
+            <div className="session-preview" aria-label="Contoh tampilan sesi latihan">
+              <div className="preview-topline"><span>Biologi</span><span>03 / 10</span></div>
+              <div className="preview-progress"><span /></div>
+              <p className="preview-label">Pilih jawaban terbaik</p>
+              <h2>Bagian sel yang mengatur aktivitas sel adalah…</h2>
+              <div className="preview-option"><b>A</b><span>Membran sel</span></div>
+              <div className="preview-option active"><b>B</b><span>Nukleus</span><Check size={17} /></div>
+              <div className="preview-option"><b>C</b><span>Ribosom</span></div>
+              <div className="preview-footer"><span><Timer size={16} /> 24:38</span><span>Mode fokus</span></div>
+            </div>
           </div>
+          <div className="landing-points" aria-label="Fitur utama Drillio">
+            <article><h2>Buat soal di AI pilihanmu</h2><p>Isi topik dan kebutuhanmu. Drillio menyiapkan instruksi JSON yang siap disalin.</p></article>
+            <article><h2>Tempel, lalu mulai</h2><p>Masukkan hasil JSON tanpa memindahkan soal satu per satu ke formulir lain.</p></article>
+            <article><h2>Jaga ritme belajarmu</h2><p>Atur timer sendiri atau masuk layar penuh saat ingin berlatih tanpa distraksi.</p></article>
+          </div>
+        </section>
+      )}
 
+      {screen === 'configure' && (
+        <section className="configure-page compact-configure" aria-labelledby="page-title">
+          <div className="config-heading">
+            <button className="quiet-back" type="button" onClick={() => setScreen('home')}><ArrowLeft size={17} /> Kembali</button>
+            <h1 id="page-title">Rancang paket soalmu.</h1>
+            <p>Isi yang penting dulu. Pengaturan lain bisa kamu sesuaikan dalam hitungan detik.</p>
+          </div>
           <form className="config-panel" onSubmit={(event) => { event.preventDefault(); moveToImport() }}>
-            <div className="panel-heading"><span>Rancang sesi latihan</span><span className="step-tag">Konfigurasi</span></div>
             <label className="field full-width">Materi atau topik
               <input autoFocus value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Contoh: Sistem tata surya, TOEFL, React…" required />
             </label>
@@ -170,23 +196,20 @@ export default function App() {
                 <div className="range-labels"><span>Mudah</span><span>Menantang</span></div>
               </div>
             </div>
-            <label className="field full-width">Bahasa pertanyaan
-              <select value={language} onChange={(event) => setLanguage(event.target.value)}><option>Indonesia</option><option>English</option></select>
-            </label>
-            <fieldset className="timer-field">
-              <legend>Waktu pengerjaan</legend>
-              <label className="timer-choice"><input type="checkbox" checked={timerEnabled} onChange={(event) => { setTimerEnabled(event.target.checked); setTimerError('') }} /> <span>Gunakan timer untuk sesi ini</span></label>
-              {timerEnabled && <label className="timer-input">Durasi
-                <span><input aria-label="Durasi timer dalam menit" type="text" inputMode="numeric" value={timerMinutes} onChange={(event) => { setTimerMinutes(event.target.value); setTimerError('') }} /> menit</span>
-              </label>}
-              <p>Timer dimulai saat paket soal dibuka. Kosongkan pilihan ini untuk latihan tanpa batas waktu.</p>
+            <div className="field-grid compact-settings">
+              <label className="field">Bahasa pertanyaan
+                <select value={language} onChange={(event) => setLanguage(event.target.value)}><option>Indonesia</option><option>English</option></select>
+              </label>
+              <fieldset className="format-field"><legend>Jenis pertanyaan</legend><div className="format-options">{(['Pilihan ganda', 'Benar / Salah', 'Campuran'] as const).map((format) => <button key={format} type="button" className={questionFormat === format ? 'format-option selected' : 'format-option'} onClick={() => setQuestionFormat(format)}><span>{format}</span></button>)}</div></fieldset>
+            </div>
+            <div className="timer-field compact-timer">
+              <label className="timer-choice"><input type="checkbox" checked={timerEnabled} onChange={(event) => { setTimerEnabled(event.target.checked); setTimerError('') }} /> <span>Aktifkan timer</span></label>
+              {timerEnabled && <label className="timer-input"><span><input aria-label="Durasi timer dalam menit" type="text" inputMode="numeric" value={timerMinutes} onChange={(event) => { setTimerMinutes(event.target.value); setTimerError('') }} /> menit</span></label>}
+              {!timerEnabled && <span className="timer-hint">Latihan tanpa batas waktu</span>}
               {timerError && <span className="field-error" role="alert">{timerError}</span>}
-            </fieldset>
-            <fieldset className="format-field"><legend>Jenis pertanyaan</legend><div className="format-options">{(['Pilihan ganda', 'Benar / Salah', 'Campuran'] as const).map((format) => <button key={format} type="button" className={questionFormat === format ? 'format-option selected' : 'format-option'} onClick={() => setQuestionFormat(format)}><span>{format}</span><small>{format === 'Pilihan ganda' ? 'Empat opsi per soal' : format === 'Benar / Salah' ? 'Dua pilihan ringkas' : 'Gabungkan keduanya'}</small></button>)}</div></fieldset>
-            <label className="field full-width">Instruksi tambahan <span>Opsional</span>
-              <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contoh: fokus pada konsep dasar, jangan gunakan soal hitungan." rows={3} />
-            </label>
-            <button className="primary-button" type="submit">Siapkan instruksi</button>
+            </div>
+            <details className="additional-instructions"><summary>Tambahkan instruksi khusus <span>Opsional</span></summary><label className="field"><textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contoh: fokus pada konsep dasar, jangan gunakan soal hitungan." rows={2} /></label></details>
+            <button className="primary-button" type="submit">Buat instruksi untuk AI <ArrowRight size={18} /></button>
           </form>
         </section>
       )}
