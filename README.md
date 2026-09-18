@@ -1,4 +1,4 @@
-# Latih
+# Drillio
 
 Static web app untuk mengubah JSON paket soal dari AI menjadi sesi latihan pilihan ganda.
 

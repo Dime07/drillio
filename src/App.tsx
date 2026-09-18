@@ -1,11 +1,17 @@
-import { useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clipboard, FileJson2, Lightbulb, RotateCcw, XCircle } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clipboard, FileJson2, Lightbulb, Maximize2, Minimize2, RotateCcw, Timer, XCircle } from 'lucide-react'
 import { calculateScore, parseQuizSet, type Difficulty, type QuizSet } from './quiz'
 import { createPrompt } from './prompt'
 
 type Screen = 'configure' | 'import' | 'practice' | 'result'
 
 const letters = ['A', 'B', 'C', 'D']
+
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
+}
 
 const exampleJson = `{
   "title": "Dasar Fotosintesis",
@@ -29,6 +35,12 @@ export default function App() {
   const [difficultyLevel, setDifficultyLevel] = useState(2)
   const [language, setLanguage] = useState('Indonesia')
   const [questionFormat, setQuestionFormat] = useState<'Pilihan ganda' | 'Benar / Salah' | 'Campuran'>('Campuran')
+  const [timerEnabled, setTimerEnabled] = useState(false)
+  const [timerMinutes, setTimerMinutes] = useState('30')
+  const [timerError, setTimerError] = useState('')
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [fullscreenMessage, setFullscreenMessage] = useState('')
   const [notes, setNotes] = useState('')
   const [promptCopied, setPromptCopied] = useState(false)
   const [rawJson, setRawJson] = useState('')
@@ -44,12 +56,35 @@ export default function App() {
   const currentQuestion = quiz?.questions[activeQuestion]
   const answeredCount = Object.values(answers).filter((value) => value !== undefined).length
 
+  useEffect(() => {
+    const updateFullscreenState = () => setIsFullscreen(document.fullscreenElement !== null)
+    document.addEventListener('fullscreenchange', updateFullscreenState)
+    return () => document.removeEventListener('fullscreenchange', updateFullscreenState)
+  }, [])
+
+  useEffect(() => {
+    if (screen !== 'practice' || remainingSeconds === null) return
+    if (remainingSeconds === 0) {
+      setScreen('result')
+      return
+    }
+    const timer = window.setInterval(() => {
+      setRemainingSeconds((seconds) => seconds === null ? null : Math.max(0, seconds - 1))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [screen, remainingSeconds])
+
   function moveToImport() {
     if (!/^\d+$/.test(countInput) || count < 1 || count > 50) {
       setCountError('Masukkan jumlah antara 1 dan 50.')
       return
     }
+    if (timerEnabled && (!/^\d+$/.test(timerMinutes) || Number(timerMinutes) < 1 || Number(timerMinutes) > 999)) {
+      setTimerError('Masukkan durasi antara 1 dan 999 menit.')
+      return
+    }
     setCountError('')
+    setTimerError('')
     setScreen('import')
     setPromptCopied(false)
   }
@@ -72,6 +107,7 @@ export default function App() {
       setImportErrors([])
       setAnswers({})
       setActiveQuestion(0)
+      setRemainingSeconds(timerEnabled ? Number(timerMinutes) * 60 : null)
       setIsImporting(false)
       setScreen('practice')
     }, 120)
@@ -84,13 +120,29 @@ export default function App() {
     setQuiz(null)
     setAnswers({})
     setActiveQuestion(0)
+    setRemainingSeconds(null)
+    setFullscreenMessage('')
+  }
+
+  async function toggleFullscreen() {
+    if (!document.fullscreenEnabled) {
+      setFullscreenMessage('Layar penuh belum didukung oleh browser ini.')
+      return
+    }
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen()
+      else await document.documentElement.requestFullscreen()
+      setFullscreenMessage('')
+    } catch {
+      setFullscreenMessage('Layar penuh tidak dapat diaktifkan. Coba lagi dari browser ini.')
+    }
   }
 
   return (
     <main className="app-shell">
       <header className="site-header">
-        <button className="brand" onClick={resetApp} aria-label="Kembali ke beranda Latih">
-          <span>latih<span className="brand-stop">.</span></span>
+        <button className="brand" onClick={resetApp} aria-label="Kembali ke beranda Drillio">
+          <span>Drillio<span className="brand-stop">.</span></span>
         </button>
         <span className="header-note">ruang latihan mandiri</span>
       </header>
@@ -121,6 +173,15 @@ export default function App() {
             <label className="field full-width">Bahasa pertanyaan
               <select value={language} onChange={(event) => setLanguage(event.target.value)}><option>Indonesia</option><option>English</option></select>
             </label>
+            <fieldset className="timer-field">
+              <legend>Waktu pengerjaan</legend>
+              <label className="timer-choice"><input type="checkbox" checked={timerEnabled} onChange={(event) => { setTimerEnabled(event.target.checked); setTimerError('') }} /> <span>Gunakan timer untuk sesi ini</span></label>
+              {timerEnabled && <label className="timer-input">Durasi
+                <span><input aria-label="Durasi timer dalam menit" type="text" inputMode="numeric" value={timerMinutes} onChange={(event) => { setTimerMinutes(event.target.value); setTimerError('') }} /> menit</span>
+              </label>}
+              <p>Timer dimulai saat paket soal dibuka. Kosongkan pilihan ini untuk latihan tanpa batas waktu.</p>
+              {timerError && <span className="field-error" role="alert">{timerError}</span>}
+            </fieldset>
             <fieldset className="format-field"><legend>Jenis pertanyaan</legend><div className="format-options">{(['Pilihan ganda', 'Benar / Salah', 'Campuran'] as const).map((format) => <button key={format} type="button" className={questionFormat === format ? 'format-option selected' : 'format-option'} onClick={() => setQuestionFormat(format)}><span>{format}</span><small>{format === 'Pilihan ganda' ? 'Empat opsi per soal' : format === 'Benar / Salah' ? 'Dua pilihan ringkas' : 'Gabungkan keduanya'}</small></button>)}</div></fieldset>
             <label className="field full-width">Instruksi tambahan <span>Opsional</span>
               <textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contoh: fokus pada konsep dasar, jangan gunakan soal hitungan." rows={3} />
@@ -154,7 +215,14 @@ export default function App() {
 
       {screen === 'practice' && quiz && currentQuestion && (
         <section className="practice-page" aria-labelledby="question-title">
-          <div className="practice-meta"><span>{quiz.topic}</span><span>{activeQuestion + 1} / {quiz.questions.length}</span></div>
+          <div className="practice-toolbar">
+            <div className="practice-meta"><span>{quiz.topic}</span><span>{activeQuestion + 1} / {quiz.questions.length}</span></div>
+            <div className="exam-controls">
+              {remainingSeconds !== null && <div className={`timer-display ${remainingSeconds < 60 ? 'timer-urgent' : ''}`} aria-live="polite"><Timer size={17} /><span>{formatTime(remainingSeconds)}</span></div>}
+              <button className="fullscreen-button" type="button" onClick={toggleFullscreen} aria-pressed={isFullscreen}>{isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}{isFullscreen ? 'Keluar layar penuh' : 'Layar penuh'}</button>
+            </div>
+          </div>
+          {fullscreenMessage && <p className="fullscreen-message" role="status">{fullscreenMessage}</p>}
           <div className="progress-track"><span style={{ width: `${((activeQuestion + 1) / quiz.questions.length) * 100}%` }} /></div>
           <div className="question-layout">
             <div className="question-copy"><p>{currentQuestion.type === 'true_false' ? 'Benar atau salah?' : 'Pilih jawaban terbaik'}</p><h1 id="question-title">{currentQuestion.question}</h1></div>

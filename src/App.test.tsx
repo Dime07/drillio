@@ -33,7 +33,7 @@ describe('practice flow', () => {
     expect(await screen.findByText('Pemahamanmu sudah kuat.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Buat paket baru' }))
     expect(screen.getByText('Rancang sesi latihan')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Kembali ke beranda Latih' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Kembali ke beranda Drillio' }))
   })
 
   it('explains an invalid JSON import', async () => {
@@ -44,6 +44,20 @@ describe('practice flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buka sesi latihan' }))
 
     expect(await screen.findByText('Format JSON belum cocok.')).toBeInTheDocument()
+  })
+
+  it('lets users set a timer and exposes exam controls during practice', async () => {
+    render(<App />)
+    fireEvent.change(screen.getByLabelText('Materi atau topik'), { target: { value: 'Biologi' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Gunakan timer untuk sesi ini' }))
+    fireEvent.change(screen.getByLabelText('Durasi timer dalam menit'), { target: { value: '45' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Siapkan instruksi' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lihat contoh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Buka sesi latihan' }))
+
+    expect(await screen.findByText('45:00')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Layar penuh' }))
+    expect(screen.getByText('Layar penuh belum didukung oleh browser ini.')).toBeInTheDocument()
   })
 
   it('requires a numeric question count between 1 and 50', () => {
