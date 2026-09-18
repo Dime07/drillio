@@ -1,0 +1,57 @@
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import App from './App'
+
+afterEach(cleanup)
+
+describe('practice flow', () => {
+  it('moves from configuration through import, practice, review, and reset', async () => {
+    render(<App />)
+
+    fireEvent.change(screen.getByLabelText('Materi atau topik'), { target: { value: 'Biologi' } })
+    fireEvent.change(screen.getByLabelText('Jumlah pertanyaan'), { target: { value: '7' } })
+    fireEvent.change(screen.getByLabelText('Tingkat kesulitan'), { target: { value: '3' } })
+    fireEvent.change(screen.getByLabelText('Bahasa pertanyaan'), { target: { value: 'English' } })
+    fireEvent.click(screen.getByRole('button', { name: /Pilihan ganda/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Benar \/ Salah/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Campuran/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Siapkan instruksi' }))
+
+    expect(screen.getByText('Bawa hasilnya kembali ke sini.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ubah konfigurasi' }))
+    expect(screen.getByText('Rancang sesi latihan')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Siapkan instruksi' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salin instruksi' }))
+    await screen.findByText('Instruksi tersalin')
+    fireEvent.click(screen.getByRole('button', { name: 'Lihat contoh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Buka sesi latihan' }))
+
+    expect(await screen.findByText('Di organel manakah fotosintesis terutama berlangsung?')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Kloroplas/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lihat hasil' }))
+
+    expect(await screen.findByText('Pemahamanmu sudah kuat.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Buat paket baru' }))
+    expect(screen.getByText('Rancang sesi latihan')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Kembali ke beranda Latih' }))
+  })
+
+  it('explains an invalid JSON import', async () => {
+    render(<App />)
+    fireEvent.change(screen.getByLabelText('Materi atau topik'), { target: { value: 'Biologi' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Siapkan instruksi' }))
+    fireEvent.change(screen.getByLabelText('JSON dari AI'), { target: { value: '{bukan json}' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Buka sesi latihan' }))
+
+    expect(await screen.findByText('Format JSON belum cocok.')).toBeInTheDocument()
+  })
+
+  it('requires a numeric question count between 1 and 50', () => {
+    render(<App />)
+    fireEvent.change(screen.getByLabelText('Materi atau topik'), { target: { value: 'Biologi' } })
+    fireEvent.change(screen.getByLabelText('Jumlah pertanyaan'), { target: { value: 'banyak' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Siapkan instruksi' }))
+
+    expect(screen.getByText('Masukkan jumlah antara 1 dan 50.')).toBeInTheDocument()
+  })
+})
