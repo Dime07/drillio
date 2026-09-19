@@ -158,7 +158,15 @@ function AppRoutes() {
             Drillio<span className="brand-stop">.</span>
           </span>
         </button>
-        <span className="header-note">latihan dari soal AI</span>
+        <div className="header-actions">
+          <button
+            className="header-cta"
+            type="button"
+            onClick={() => navigate('/setup')}
+          >
+            Buka editor
+          </button>
+        </div>
       </header>
       <Routes>
         <Route

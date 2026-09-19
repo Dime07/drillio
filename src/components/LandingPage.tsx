@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Timer } from 'lucide-react'
+import { ArrowRight, Check, FileJson, Timer } from 'lucide-react'
 
 export function LandingPage({ onStart }: { onStart: () => void }) {
   return (
@@ -11,15 +11,23 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
             Kerjakan seperti ujian.
           </h1>
           <p>
-            Drillio mengubah paket soal JSON menjadi sesi latihan yang fokus,
-            lengkap dengan timer dan layar penuh saat kamu membutuhkannya.
+            Drillio mengubah paket soal JSON menjadi sesi latihan yang fokus—
+            lengkap dengan timer dan mode layar penuh saat kamu membutuhkannya.
           </p>
-          <button className="landing-cta" type="button" onClick={onStart}>
-            Mulai buat latihan <ArrowRight size={18} />
-          </button>
-          <span className="landing-note">
-            Tanpa akun. Pakai AI apa pun yang kamu suka.
-          </span>
+          <div className="landing-actions">
+            <button className="landing-cta" type="button" onClick={onStart}>
+              Mulai buat latihan <ArrowRight size={18} />
+            </button>
+            <a className="landing-secondary" href="#landing-features">
+              <FileJson size={17} /> Lihat cara kerja
+            </a>
+          </div>
+          <div className="landing-trust">
+            <span>
+              <Check size={16} /> Tanpa akun. Berjalan langsung di browser.
+            </span>
+            <small>Gunakan AI favoritmu untuk membuat soal.</small>
+          </div>
         </div>
         <section
           className="session-preview"
@@ -55,7 +63,11 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
           </div>
         </section>
       </div>
-      <section className="landing-points" aria-label="Fitur utama Drillio">
+      <section
+        className="landing-points"
+        id="landing-features"
+        aria-label="Fitur utama Drillio"
+      >
         <article>
           <h2>Buat soal di AI pilihanmu</h2>
           <p>
