@@ -28,7 +28,6 @@ export function ResultsPage({
           <strong>{score}</strong>
           <span>
             jawaban benar
-            <br />
             dari {quiz.questions.length} soal
           </span>
           <em>{percentage}%</em>
