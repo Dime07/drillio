@@ -164,7 +164,7 @@ function AppRoutes() {
             type="button"
             onClick={() => navigate('/setup')}
           >
-            Buka editor
+            Mulai Latihan
           </button>
         </div>
       </header>
