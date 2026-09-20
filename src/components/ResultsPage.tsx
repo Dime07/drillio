@@ -26,10 +26,7 @@ export function ResultsPage({
         </p>
         <div className="score-display">
           <strong>{score}</strong>
-          <span>
-            jawaban benar
-            dari {quiz.questions.length} soal
-          </span>
+          <span>jawaban benar dari {quiz.questions.length} soal</span>
           <em>{percentage}%</em>
         </div>
         <button className="secondary-button" type="button" onClick={onRestart}>
